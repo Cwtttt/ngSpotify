@@ -9,6 +9,7 @@ import { AboutComponent } from './components/about/about.component';
 import { AppRoutingModule } from './app-routing.module';
 import { SearchComponent } from './components/search/search.component';
 import { LoginComponent } from './components/login/login.component';
+import { SmallArtistComponent } from './components/small-artist/small-artist.component';
 
 @NgModule({
   declarations: [
@@ -16,7 +17,8 @@ import { LoginComponent } from './components/login/login.component';
     NavbarComponent,
     AboutComponent,
     SearchComponent,
-    LoginComponent
+    LoginComponent,
+    SmallArtistComponent
   ],
   imports: [
     BrowserModule,

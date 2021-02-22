@@ -16,6 +16,7 @@ export class SpotifyService {
 
   constructor(private _http: HttpClient) { }
 
+  //todo: get token only if 401 Unauthorized
    getToken(){
     of(this._http.request<any>('POST', 'https://accounts.spotify.com/api/token',{
       headers: {
@@ -30,8 +31,7 @@ export class SpotifyService {
 
   searchMusic(str:string, type='artist'){
     this.getToken();
-    console.log(this.token);
-    return  this._http.request('GET', `https://api.spotify.com/v1/search?q=${str}&offset=0&limit=20&type=${type}&market=US`,{
+    return  this._http.request<any>('GET', `https://api.spotify.com/v1/search?q=${str}&offset=0&limit=20&type=${type}&market=US`,{
       headers: {
         'Content-Type': 'application/json', 
         'Authorization' : `Bearer ${this.token}}` 
