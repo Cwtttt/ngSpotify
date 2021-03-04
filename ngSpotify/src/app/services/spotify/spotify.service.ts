@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { catchError, map, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
+import {environment} from "../../../environments/environment";
+import {catchError, mergeMap, tap} from "rxjs/operators";
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +10,8 @@ import { of } from 'rxjs';
 
 export class SpotifyService {
 
-  private clientId:string = '3633b9805ce74f379b244c930a17d7d9';
-  private clientSecret:string = '724f3495c7b743bf98b21c52ed1cf1dc';
+  private clientId:string = environment.clientId;
+  private clientSecret:string = environment.clientSecret;
 
   private token:string;
 
@@ -18,25 +19,36 @@ export class SpotifyService {
 
   //todo: get token only if 401 Unauthorized
    getToken(){
-    of(this._http.request<any>('POST', 'https://accounts.spotify.com/api/token',{
+    if (this.token) {
+      return of(null);
+    }
+
+    return this._http.post<any>('https://accounts.spotify.com/api/token',{
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded', 
-        'Authorization' : `Basic ${btoa(`${this.clientId}:${this.clientSecret}`)}` 
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${btoa(`${this.clientId}:${this.clientSecret}`)}`
       },
       body: 'grant_type=client_credentials'
-    }).subscribe((res) => {
-      this.token = res.access_token.toString();
-    }));
+    })
+      .pipe(tap(({ access_token }) => this.token = access_token.toString()));
   }
 
-  searchMusic(str:string, type='artist'){
-    this.getToken();
-    return  this._http.request<any>('GET', `https://api.spotify.com/v1/search?q=${str}&offset=0&limit=20&type=${type}&market=US`,{
-      headers: {
-        'Content-Type': 'application/json', 
-        'Authorization' : `Bearer ${this.token}}` 
-      }
-    });
+  searchMusic(q:string, type='artist'){
+    return this.getToken().pipe(
+      mergeMap(() => this._http.get<any>(`https://api.spotify.com/v1/search`, {
+        params: {
+          q,
+          type,
+          offset: '0',
+          limit: '20',
+          market: 'US',
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}}`
+        }
+      })),
+    );
   }
 
 }
@@ -53,9 +65,9 @@ export class SpotifyService {
 //     },
 //     body: 'grant_type=client_credentials'
 //   });
-  
+
 //   const data = await result.json();
-  
+
 //   return data.access_token;
 // }
 
@@ -66,7 +78,7 @@ export class SpotifyService {
 //     method: 'GET',
 //     headers: {'Authorization' : 'Bearer ' + token}
 //   });
-  
+
 //   const data = await result.json()
 //   return data;
 // }

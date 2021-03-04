@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { SpotifyService } from '../../services/spotify/spotify.service';
 import { Artist } from '../../../Artist';
+import { FormControl, FormGroup } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'search',
@@ -8,19 +10,23 @@ import { Artist } from '../../../Artist';
   styleUrls: ['./search.component.css']
 })
 export class SearchComponent implements OnInit {
-  searchStr: string;
+  form: FormGroup;
   searchRes: Artist[];
 
   constructor(private _spotifyService:SpotifyService) { }
 
   ngOnInit(): void {
-    this._spotifyService.getToken();
-  }
+    this._spotifyService.getToken().subscribe();
 
-  searchMusic(){
-    this._spotifyService.searchMusic(this.searchStr)
-    .subscribe( res => {
-      this.searchRes = res.artists.items;
+    this.form = new FormGroup({
+      phrase: new FormControl(''),
     });
+
+    this.form.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(({ phrase }) => this._spotifyService.searchMusic(phrase))
+      ).subscribe(({ artists }) => this.searchRes = artists.items);
   }
 }
